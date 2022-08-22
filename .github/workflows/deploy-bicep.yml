@@ -1,0 +1,63 @@
+name: Publish Bicep
+
+on:
+  workflow_call:
+    inputs:
+      main_bicep_file:
+        type: string
+        required: true
+      workflow_environment:
+        type: string
+        required: true
+      parameters:
+        type: string
+        required: false
+    secrets:
+      # https://github.com/actions/runner/issues/1490
+      # These are actually coming in from the environment, but
+      # need to be referenced here due to this bug
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_APIM_NAME:
+        required: true
+      AZURE_APIM_RG:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.workflow_environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy API Revisions
+        uses: azure/arm-deploy@v1
+        with:
+          resourceGroupName: ${{ secrets.AZURE_APIM_RG }}
+          template: ${{ inputs.main_bicep_file }}
+          parameters: apimServiceName=${{ secrets.AZURE_APIM_NAME }} ${{ inputs.parameters }}
+
+        # Reference: https://github.com/marketplace/actions/azure-login#az-logout-and-security-hardening
+      - name: Azure logout
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az logout
+            az cache purge
+            az account clear

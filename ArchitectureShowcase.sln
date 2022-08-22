@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32811.315
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{376B5E00-180B-4117-A9C1-743531E29126}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchitectureShowcase.RestApi", "API\ArchitectureShowcase.RestApi\ArchitectureShowcase.RestApi.csproj", "{D98F2C51-01AA-44AC-B5BA-0565453F8CDE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D98F2C51-01AA-44AC-B5BA-0565453F8CDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D98F2C51-01AA-44AC-B5BA-0565453F8CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D98F2C51-01AA-44AC-B5BA-0565453F8CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D98F2C51-01AA-44AC-B5BA-0565453F8CDE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D98F2C51-01AA-44AC-B5BA-0565453F8CDE} = {376B5E00-180B-4117-A9C1-743531E29126}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EBB48A16-DC47-4BB1-BA16-FEC2DAF1FB1C}
+	EndGlobalSection
+EndGlobal
