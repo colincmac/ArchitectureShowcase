@@ -1,0 +1,86 @@
+using ArchitectureShowcase.Core.Azure.Cosmos;
+using ArchitectureShowcase.Core.Domain.Contracts;
+using ArchitectureShowcase.Core.Domain.Extensions;
+using ArchitectureShowcase.Domain;
+using ArchitectureShowcase.Domain.Commands;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+namespace ArchitectureShowcase.ArchitectureStore.HttpSurface;
+
+public static class Function1
+{
+
+    //[FunctionName(nameof(Run))]
+    //public static void Run([CosmosDBTrigger(
+    //    databaseName: "arch-showcase-cosmos-eastus",
+    //    collectionName: "arch-files",
+    //    ConnectionStringSetting = "ArchFilesCosmos",
+    //    LeaseCollectionName = "leases")] IReadOnlyList<Document> input,
+    //    ILogger log)
+    //{
+    //    if (input != null && input.Count > 0)
+    //    {
+    //        log.LogInformation("Documents modified " + input.Count);
+    //        log.LogInformation("First document Id " + input[0].Id);
+    //    }
+    //}j
+    public const string EventSource = "ArchitectureShowcase.ArchitectureStore";
+
+    [FunctionName(nameof(GetSolution))]
+    public static async Task<OkObjectResult> GetSolution(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "solution/{id}")] HttpRequest req,
+    [CosmosDB(databaseName: "architecture-showcase",
+                containerName: "documentEvents",
+                Connection = "ArchFilesCosmos",
+                PartitionKey = "Document/{id}")] IEnumerable<CloudEventWrapper> documentEvents
+)
+    {
+        IEnumerable<IDomainEvent> domainEvents = documentEvents.Select(x => x.Event.ToDomainEvent());
+        var document = new Document(domainEvents);
+
+        return new OkObjectResult(document);
+    }
+
+
+    [FunctionName(nameof(CreateSolution))]
+    public static async Task<OkObjectResult> CreateSolution(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "solution/create")] CreateDocument req,
+        [CosmosDB(databaseName: "architecture-showcase",
+            containerName: "metadata",
+            Connection = "ArchFilesCosmos")] IAsyncCollector<Tag> updatedTags,
+        [CosmosDB(databaseName: "architecture-showcase",
+            containerName: "documentEvents",
+            Connection = "ArchFilesCosmos")] IAsyncCollector<CloudEventWrapper> newDocumentEvents
+    )
+    {
+        var newDocument = Document.Create(req);
+        foreach (IDomainEvent domainEvent in newDocument.DomainEvents)
+        {
+            var cloudEvent = domainEvent.ToCloudEvent(EventSource, newDocument.GetGlobalIdentifier());
+            var wrapper = CloudEventWrapper.FromCloudEvent(cloudEvent);
+            await newDocumentEvents.AddAsync(wrapper);
+        }
+
+        return new OkObjectResult(newDocument);
+    }
+
+    //[FunctionName(nameof(Run))]
+    //public static void Run([CosmosDBTrigger(
+    //    databaseName: "arch-showcase-cosmos-eastus",
+    //    collectionName: "arch-files",
+    //    ConnectionStringSetting = "ArchFilesCosmos",
+    //    LeaseCollectionName = "leases")] IReadOnlyList<Document> input,
+    //ILogger log)
+    //{
+    //    if (input != null && input.Count > 0)
+    //    {
+    //        log.LogInformation("Documents modified " + input.Count);
+    //        log.LogInformation("First document Id " + input[0].Id);
+    //    }
+    //}
+}
