@@ -2,6 +2,11 @@
 using System.Text.Json.Serialization;
 
 namespace ArchitectureShowcase.Core.Azure.Cosmos;
+
+/*
+ * CloudEvents have a strict schema and Cosmos serialization adds properties that will fail validation checks.
+ * This wraps the event in an opionated way to avoid issues without providing our own JsonConverters.
+ */
 public class CloudEventWrapper
 {
     [JsonConstructor]

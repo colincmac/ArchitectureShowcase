@@ -12,28 +12,14 @@ using System.Linq;
 using System.Threading.Tasks;
 namespace ArchitectureShowcase.ArchitectureStore.HttpSurface;
 
-public static class Function1
+public static class ArchitectureStoreHttpSurface
 {
 
-    //[FunctionName(nameof(Run))]
-    //public static void Run([CosmosDBTrigger(
-    //    databaseName: "arch-showcase-cosmos-eastus",
-    //    collectionName: "arch-files",
-    //    ConnectionStringSetting = "ArchFilesCosmos",
-    //    LeaseCollectionName = "leases")] IReadOnlyList<Document> input,
-    //    ILogger log)
-    //{
-    //    if (input != null && input.Count > 0)
-    //    {
-    //        log.LogInformation("Documents modified " + input.Count);
-    //        log.LogInformation("First document Id " + input[0].Id);
-    //    }
-    //}j
     public const string EventSource = "ArchitectureShowcase.ArchitectureStore";
 
-    [FunctionName(nameof(GetSolution))]
-    public static async Task<OkObjectResult> GetSolution(
-    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "solution/{id}")] HttpRequest req,
+    [FunctionName(nameof(GetSolutionById))]
+    public static Task<OkObjectResult> GetSolutionById(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "solutions/{id}")] HttpRequest req,
     [CosmosDB(databaseName: "architecture-showcase",
                 containerName: "documentEvents",
                 Connection = "ArchFilesCosmos",
@@ -43,13 +29,12 @@ public static class Function1
         IEnumerable<IDomainEvent> domainEvents = documentEvents.Select(x => x.Event.ToDomainEvent());
         var document = new Document(domainEvents);
 
-        return new OkObjectResult(document);
+        return Task.FromResult(new OkObjectResult(document));
     }
-
 
     [FunctionName(nameof(CreateSolution))]
     public static async Task<OkObjectResult> CreateSolution(
-        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "solution/create")] CreateDocument req,
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "solutions/create")] CreateDocument req,
         [CosmosDB(databaseName: "architecture-showcase",
             containerName: "metadata",
             Connection = "ArchFilesCosmos")] IAsyncCollector<Tag> updatedTags,
@@ -69,18 +54,4 @@ public static class Function1
         return new OkObjectResult(newDocument);
     }
 
-    //[FunctionName(nameof(Run))]
-    //public static void Run([CosmosDBTrigger(
-    //    databaseName: "arch-showcase-cosmos-eastus",
-    //    collectionName: "arch-files",
-    //    ConnectionStringSetting = "ArchFilesCosmos",
-    //    LeaseCollectionName = "leases")] IReadOnlyList<Document> input,
-    //ILogger log)
-    //{
-    //    if (input != null && input.Count > 0)
-    //    {
-    //        log.LogInformation("Documents modified " + input.Count);
-    //        log.LogInformation("First document Id " + input[0].Id);
-    //    }
-    //}
 }

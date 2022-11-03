@@ -1,10 +1,12 @@
 ﻿using ArchitectureShowcase.ArchitectureStore;
-using Azure.Core.Serialization;
+using ArchitectureShowcase.Core.Azure.Cosmos;
+using Azure.Identity;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.IO;
+using System;
 using System.Text.Json;
 
 [assembly: FunctionsStartup(typeof(Startup))]
@@ -14,11 +16,23 @@ public class Startup : FunctionsStartup
 {
     public override void Configure(IFunctionsHostBuilder builder)
     {
-        builder.Services.AddSingleton<ICosmosDBSerializerFactory, MyCosmosDBSerializerFactory>();
+        ConfigureServices(builder.Services);
     }
+
+    private void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<ICosmosDBSerializerFactory, CosmosSerializerFactory>();
+    }
+
+    public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
+    {
+        var cs = Environment.GetEnvironmentVariable("AppConfigEndpoint");
+        builder.ConfigurationBuilder.AddAzureAppConfiguration(opt => opt.Connect(new Uri(cs), new DefaultAzureCredential()));
+    }
+
 }
 
-public class MyCosmosDBSerializerFactory : ICosmosDBSerializerFactory
+public class CosmosSerializerFactory : ICosmosDBSerializerFactory
 {
     public CosmosSerializer CreateSerializer()
     {
@@ -27,47 +41,5 @@ public class MyCosmosDBSerializerFactory : ICosmosDBSerializerFactory
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         return new CosmosSystemTextJsonSerializer(options);
-    }
-}
-
-public class CosmosSystemTextJsonSerializer : CosmosSerializer
-{
-    private readonly JsonObjectSerializer systemTextJsonSerializer;
-
-    public CosmosSystemTextJsonSerializer(JsonSerializerOptions jsonSerializerOptions)
-    {
-        this.systemTextJsonSerializer = new JsonObjectSerializer(jsonSerializerOptions);
-    }
-
-    public override T FromStream<T>(Stream stream)
-    {
-        using (stream)
-        {
-            if (stream.CanSeek
-                   && stream.Length == 0)
-            {
-                return default;
-            }
-
-            if (typeof(Stream).IsAssignableFrom(typeof(T)))
-            {
-                return (T)(object)stream;
-            }
-
-            return (T)systemTextJsonSerializer.Deserialize(stream, typeof(T), default);
-        }
-    }
-
-    public override Stream ToStream<T>(T input)
-    {
-        var streamPayload = new MemoryStream();
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-        var json = JsonSerializer.Serialize(input, options);
-        systemTextJsonSerializer.Serialize(streamPayload, input, input.GetType(), default);
-        streamPayload.Position = 0;
-        return streamPayload;
     }
 }

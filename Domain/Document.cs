@@ -18,6 +18,7 @@ public class Document : AggregateRoot
     public DocumentStatusEnum Status { get; private set; } = DocumentStatusEnum.Draft;
     public bool IsActive => Status != DocumentStatusEnum.Deleted;
     public HashSet<string> Tags { get; } = new HashSet<string>();
+    public List<string> Files { get; } = new List<string>();
 
     protected Document(Guid id) : base()
     {
